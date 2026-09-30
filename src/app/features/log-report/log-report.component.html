@@ -1,0 +1,81 @@
+<div class="report-page">
+  <!-- Header -->
+  <div class="report-header">
+    <div class="header-left">
+      <button mat-button class="back-btn" (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon> Back
+      </button>
+      <h1 class="report-title">Migration Log Report{{ titleSuffix() }}</h1>
+    </div>
+    <button mat-flat-button color="primary" class="download-btn" (click)="downloadReport()" [disabled]="loading()">
+      <mat-icon>download</mat-icon> Download Log Report
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="44" />
+      <p>Loading log report…</p>
+    </div>
+  } @else if (errorMsg()) {
+    <div class="error-banner">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ errorMsg() }}</span>
+    </div>
+  } @else {
+    <!-- Status banner -->
+    @if (isFailed()) {
+      <div class="status-banner failed">
+        <div class="banner-icon"><mat-icon>cancel</mat-icon></div>
+        <div>
+          <strong>Migration Failed</strong>
+          <p>Account migration failed. Please check the details below.</p>
+        </div>
+      </div>
+    } @else if (isPartial()) {
+      <div class="status-banner partial">
+        <div class="banner-icon"><mat-icon>warning</mat-icon></div>
+        <div>
+          <strong>Partially Completed</strong>
+          <p>Migration finished with some failures. Review entries below.</p>
+        </div>
+      </div>
+    } @else {
+      <div class="status-banner success">
+        <div class="banner-icon"><mat-icon>check_circle</mat-icon></div>
+        <div>
+          <strong>Migration Completed</strong>
+          <p>All operations completed successfully.</p>
+        </div>
+      </div>
+    }
+
+    <!-- Log table -->
+    <div class="log-card">
+      <table class="log-table">
+        <colgroup>
+          <col style="width: 110px">
+          <col>
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Level</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of entries(); track $index) {
+            <tr [class.row-error]="entry.level === 'ERROR'" [class.row-warn]="entry.level === 'WARN'">
+              <td>
+                <span class="level-badge" [ngClass]="'level-' + entry.level.toLowerCase()">
+                  {{ entry.level }}
+                </span>
+              </td>
+              <td class="col-message">{{ entry.message }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

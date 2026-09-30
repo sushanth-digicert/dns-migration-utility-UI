@@ -1,0 +1,388 @@
+<!-- Step indicator -->
+<div class="stepper">
+  @for (step of steps; track step.idx; let last = $last) {
+    <div class="step" [class.active]="activeStepIdx() === step.idx" [class.done]="activeStepIdx() > step.idx">
+      <div class="step-circle">
+        @if (activeStepIdx() > step.idx) {
+          <mat-icon>check</mat-icon>
+        } @else {
+          {{ step.idx + 1 }}
+        }
+      </div>
+      <span class="step-label">{{ step.label }}</span>
+    </div>
+    @if (!last) { <div class="step-line" [class.done]="activeStepIdx() > step.idx"></div> }
+  }
+</div>
+
+<!-- ── ENTER: Validate form ── -->
+@if (view() === 'enter') {
+  <div class="content-card">
+    <h2 class="section-title">Validate Accounts</h2>
+    <form [formGroup]="form" (ngSubmit)="submitValidation()" class="validate-form">
+      <mat-form-field appearance="outline" class="field-batch">
+        <mat-label>Batch ID (Optional)</mat-label>
+        <input matInput formControlName="batchId" placeholder="e.g. 1, 2, 3" />
+        <mat-hint>Provide a batch ID to group these accounts (e.g. 1, 2, 3).</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="field-accounts">
+        <mat-label>Account IDs <span class="required-star">*</span></mat-label>
+        <textarea matInput formControlName="accountIds" rows="8"
+          placeholder="AC-10045&#10;AC-10046&#10;AC-10047"></textarea>
+        @if (form.controls.accountIds.invalid && form.controls.accountIds.touched) {
+          <mat-error>At least one Account ID is required.</mat-error>
+        }
+        <mat-hint>Enter multiple account IDs (one per line or comma separated).</mat-hint>
+      </mat-form-field>
+
+      @if (apiError()) {
+        <div class="inline-error"><mat-icon>error_outline</mat-icon> {{ apiError() }}</div>
+      }
+
+      <div class="form-actions">
+        <button mat-flat-button color="primary" type="submit" [disabled]="validating()">
+          @if (validating()) { <mat-spinner diameter="16" class="btn-spinner" /> }
+          Validate Accounts
+        </button>
+      </div>
+    </form>
+  </div>
+}
+
+<!-- ── RESULTS: Validation results ── -->
+@if (view() === 'results') {
+  <div class="summary-banner">
+    <div class="summary-icon"><mat-icon>check_circle</mat-icon></div>
+    <div class="summary-text">
+      <strong>Validation completed</strong>
+      <span>{{ validationResults()?.validAccountCount }} of {{ validationResults()?.totalAccountCount }} accounts are valid for migration.</span>
+    </div>
+    <div class="summary-counts">
+      <div class="count-box valid">
+        Valid<br><strong>{{ validationResults()?.validAccountCount }}</strong>
+      </div>
+      <div class="count-box failed">
+        Failed<br><strong>{{ validationResults()?.invalidAccountCount }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <table class="data-table results-table">
+      <colgroup>
+        <col class="col-check">
+        <col class="col-account-id">
+        <col class="col-status">
+        <col class="col-details">
+      </colgroup>
+      <thead>
+        <tr>
+          <th class="th-check"></th>
+          <th>Account ID</th>
+          <th>Validation Status</th>
+          <th>Validation Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (acc of paginatedResults(); track acc.accountId) {
+          <tr [class.row-failed]="acc.validationStatus === 'FAILED'">
+            <td class="td-check">
+              <mat-checkbox
+                [checked]="isSelected(acc.accountId)"
+                [disabled]="acc.validationStatus === 'FAILED'"
+                (change)="toggleSelection(acc.accountId, $event.checked)"
+              />
+            </td>
+            <td>{{ acc.accountId }}</td>
+            <td><app-status-badge [status]="acc.validationStatus" /></td>
+            <td class="detail-cell" [class.detail-error]="acc.validationStatus === 'FAILED'">
+              {{ acc.validationDetails }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    @if ((validationResults()?.accounts?.length ?? 0) > PAGE_SIZE) {
+      <div class="paginator">
+        <button class="page-btn nav-btn" [disabled]="resultPage() === 1"
+          (click)="resultPage.set(1)" title="First page">«</button>
+        <button class="page-btn nav-btn" [disabled]="resultPage() === 1"
+          (click)="resultPage.update(p => p - 1)" title="Previous page">‹</button>
+
+        @for (p of pageNumbers(resultPage(), totalPages(validationResults()?.accounts?.length ?? 0)); track $index) {
+          @if (p === '…') {
+            <span class="page-ellipsis">…</span>
+          } @else {
+            <button class="page-btn" [class.active]="resultPage() === p"
+              (click)="resultPage.set(+p)">{{ p }}</button>
+          }
+        }
+
+        <button class="page-btn nav-btn"
+          [disabled]="resultPage() === totalPages(validationResults()?.accounts?.length ?? 0)"
+          (click)="resultPage.update(p => p + 1)" title="Next page">›</button>
+        <button class="page-btn nav-btn"
+          [disabled]="resultPage() === totalPages(validationResults()?.accounts?.length ?? 0)"
+          (click)="resultPage.set(totalPages(validationResults()?.accounts?.length ?? 0))" title="Last page">»</button>
+
+        <span class="page-info">
+          Page {{ resultPage() }} of {{ totalPages(validationResults()?.accounts?.length ?? 0) }}
+          &nbsp;·&nbsp;
+          {{ validationResults()?.accounts?.length }} accounts
+        </span>
+      </div>
+    }
+
+    <div class="card-actions">
+      <button mat-stroked-button (click)="view.set('enter')">
+        <mat-icon>arrow_back</mat-icon> Back
+      </button>
+      <button mat-flat-button color="primary"
+        [disabled]="selectedIds().length === 0"
+        (click)="reviewPage.set(1); view.set('review'); activeStepIdx.set(1)">
+        <mat-icon>arrow_forward</mat-icon>
+        Proceed to Review ({{ selectedIds().length }} Selected)
+      </button>
+    </div>
+  </div>
+}
+
+<!-- ── REVIEW: Review & start ── -->
+@if (view() === 'review') {
+  <div class="content-card">
+    <h2 class="section-title">Selected Accounts for Migration</h2>
+
+    @if (session.batchId()) {
+      <p class="batch-label"><strong>Batch ID:</strong> {{ session.batchId() }}</p>
+    }
+
+    <div class="info-notice">
+      <mat-icon>info</mat-icon>
+      <span>All valid accounts are listed below. Use the checkboxes to adjust your selection before starting migration.</span>
+    </div>
+
+    <table class="data-table review-table">
+      <colgroup>
+        <col class="col-check">
+        <col class="col-account-id">
+        <col class="col-status">
+      </colgroup>
+      <thead>
+        <tr>
+          <th class="th-check"></th>
+          <th>Account ID</th>
+          <th>Validation Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (acc of paginatedReview(); track acc.accountId) {
+          <tr [class.row-deselected]="!isSelected(acc.accountId)">
+            <td class="td-check">
+              <mat-checkbox
+                [checked]="isSelected(acc.accountId)"
+                (change)="toggleSelection(acc.accountId, $event.checked)"
+              />
+            </td>
+            <td>{{ acc.accountId }}</td>
+            <td><app-status-badge [status]="acc.validationStatus" /></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    @if (allValidAccounts().length > PAGE_SIZE) {
+      <div class="paginator">
+        <button class="page-btn nav-btn" [disabled]="reviewPage() === 1"
+          (click)="reviewPage.set(1)" title="First page">«</button>
+        <button class="page-btn nav-btn" [disabled]="reviewPage() === 1"
+          (click)="reviewPage.update(p => p - 1)" title="Previous page">‹</button>
+
+        @for (p of pageNumbers(reviewPage(), totalPages(allValidAccounts().length)); track $index) {
+          @if (p === '…') {
+            <span class="page-ellipsis">…</span>
+          } @else {
+            <button class="page-btn" [class.active]="reviewPage() === p"
+              (click)="reviewPage.set(+p)">{{ p }}</button>
+          }
+        }
+
+        <button class="page-btn nav-btn"
+          [disabled]="reviewPage() === totalPages(allValidAccounts().length)"
+          (click)="reviewPage.update(p => p + 1)" title="Next page">›</button>
+        <button class="page-btn nav-btn"
+          [disabled]="reviewPage() === totalPages(allValidAccounts().length)"
+          (click)="reviewPage.set(totalPages(allValidAccounts().length))" title="Last page">»</button>
+
+        <span class="page-info">
+          Page {{ reviewPage() }} of {{ totalPages(allValidAccounts().length) }}
+          &nbsp;·&nbsp;
+          {{ allValidAccounts().length }} valid accounts
+        </span>
+      </div>
+    }
+
+    @if (apiError()) {
+      <div class="inline-error"><mat-icon>error_outline</mat-icon> {{ apiError() }}</div>
+    }
+
+    <div class="card-actions">
+      <button mat-stroked-button (click)="view.set('results')">
+        <mat-icon>arrow_back</mat-icon> Back
+      </button>
+      <button mat-flat-button color="primary" (click)="startMigration()" [disabled]="starting() || selectedIds().length === 0">
+        @if (starting()) { <mat-spinner diameter="16" class="btn-spinner" /> }
+        <mat-icon>play_arrow</mat-icon>
+        Start Migration ({{ selectedIds().length }} Accounts)
+      </button>
+    </div>
+  </div>
+}
+
+<!-- ── IN PROGRESS ── -->
+@if (view() === 'in-progress') {
+  <div class="progress-banner">
+    <div class="migration-spinner" aria-hidden="true">
+      <div class="ring ring-outer"></div>
+      <div class="ring ring-inner"></div>
+      <mat-icon class="spinner-icon">sync</mat-icon>
+    </div>
+    <div>
+      <strong>Migration in progress</strong>
+      <p>Accounts are being migrated to the target system. Status updates every 3 seconds.</p>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <table class="data-table status-table">
+      <colgroup>
+        <col class="col-account-id">
+        <col class="col-status">
+      </colgroup>
+      <thead>
+        <tr><th>Account ID</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        @for (acc of paginatedStatuses(); track acc.accountId) {
+          <tr>
+            <td>{{ acc.accountId }}</td>
+            <td><app-status-badge [status]="acc.status" /></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    @if (accountStatuses().length > PAGE_SIZE) {
+      <div class="paginator">
+        <button class="page-btn nav-btn" [disabled]="statusPage() === 1"
+          (click)="statusPage.set(1)" title="First page">«</button>
+        <button class="page-btn nav-btn" [disabled]="statusPage() === 1"
+          (click)="statusPage.update(p => p - 1)" title="Previous page">‹</button>
+
+        @for (p of pageNumbers(statusPage(), totalPages(accountStatuses().length)); track $index) {
+          @if (p === '…') {
+            <span class="page-ellipsis">…</span>
+          } @else {
+            <button class="page-btn" [class.active]="statusPage() === p"
+              (click)="statusPage.set(+p)">{{ p }}</button>
+          }
+        }
+
+        <button class="page-btn nav-btn"
+          [disabled]="statusPage() === totalPages(accountStatuses().length)"
+          (click)="statusPage.update(p => p + 1)" title="Next page">›</button>
+        <button class="page-btn nav-btn"
+          [disabled]="statusPage() === totalPages(accountStatuses().length)"
+          (click)="statusPage.set(totalPages(accountStatuses().length))" title="Last page">»</button>
+
+        <span class="page-info">
+          Page {{ statusPage() }} of {{ totalPages(accountStatuses().length) }}
+          &nbsp;·&nbsp;
+          {{ accountStatuses().length }} accounts
+        </span>
+      </div>
+    }
+  </div>
+}
+
+<!-- ── COMPLETED ── -->
+@if (view() === 'completed') {
+  <div class="complete-banner">
+    <div class="complete-icon"><mat-icon>done_all</mat-icon></div>
+    <div>
+      <strong>Migration completed</strong>
+      <p>All selected accounts have been processed.</p>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <table class="data-table completed-table">
+      <colgroup>
+        <col class="col-account-id">
+        <col class="col-status">
+        <col class="col-log">
+      </colgroup>
+      <thead>
+        <tr><th>Account ID</th><th>Status</th><th>Log Report</th></tr>
+      </thead>
+      <tbody>
+        @for (acc of paginatedStatuses(); track acc.accountId) {
+          <tr>
+            <td>{{ acc.accountId }}</td>
+            <td><app-status-badge [status]="acc.status" /></td>
+            <td class="td-action">
+              <button mat-button color="primary" class="log-btn" (click)="viewLog(acc.accountId)">
+                <mat-icon>description</mat-icon> View Log Report
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    @if (accountStatuses().length > PAGE_SIZE) {
+      <div class="paginator">
+        <button class="page-btn nav-btn" [disabled]="statusPage() === 1"
+          (click)="statusPage.set(1)" title="First page">«</button>
+        <button class="page-btn nav-btn" [disabled]="statusPage() === 1"
+          (click)="statusPage.update(p => p - 1)" title="Previous page">‹</button>
+
+        @for (p of pageNumbers(statusPage(), totalPages(accountStatuses().length)); track $index) {
+          @if (p === '…') {
+            <span class="page-ellipsis">…</span>
+          } @else {
+            <button class="page-btn" [class.active]="statusPage() === p"
+              (click)="statusPage.set(+p)">{{ p }}</button>
+          }
+        }
+
+        <button class="page-btn nav-btn"
+          [disabled]="statusPage() === totalPages(accountStatuses().length)"
+          (click)="statusPage.update(p => p + 1)" title="Next page">›</button>
+        <button class="page-btn nav-btn"
+          [disabled]="statusPage() === totalPages(accountStatuses().length)"
+          (click)="statusPage.set(totalPages(accountStatuses().length))" title="Last page">»</button>
+
+        <span class="page-info">
+          Page {{ statusPage() }} of {{ totalPages(accountStatuses().length) }}
+          &nbsp;·&nbsp;
+          {{ accountStatuses().length }} accounts
+        </span>
+      </div>
+    }
+
+    <div class="card-actions">
+      <button mat-stroked-button (click)="resetFlow()">
+        <mat-icon>refresh</mat-icon> Migrate Another Batch
+      </button>
+      <button mat-flat-button color="primary" (click)="router.navigate(['/history'])">
+        <mat-icon>manage_search</mat-icon> Search History
+      </button>
+    </div>
+  </div>
+}

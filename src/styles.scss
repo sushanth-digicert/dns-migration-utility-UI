@@ -1,1 +1,101 @@
-/* You can add global styles to this file, and also import other style files */
+// Include theming for Angular Material with `mat.theme()`.
+// This Sass mixin will define CSS variables that are used for styling Angular Material
+// components according to the Material 3 design spec.
+// Learn more about theming and how to use it for your application's
+// custom components at https://material.angular.dev/guide/theming
+@use '@angular/material' as mat;
+
+html {
+  height: 100%;
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
+
+body {
+  color-scheme: light;
+  background-color: var(--mat-sys-surface);
+  color: #1a2b4a;
+  font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  height: 100%;
+}
+
+* { box-sizing: border-box; }
+
+// Global heading scale
+h1 { font-size: 24px; font-weight: 700; color: #0f1f3d; margin: 0 0 16px; }
+h2 { font-size: 20px; font-weight: 600; color: #1a2b4a; margin: 0 0 12px; }
+h3 { font-size: 16px; font-weight: 600; color: #1a2b4a; margin: 0 0 8px; }
+
+// Page-level title used across features
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f1f3d;
+  letter-spacing: -0.01em;
+}
+
+.page-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 400;
+}
+
+// Shared label / meta text
+.meta-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #94a3b8;
+}
+
+mat-card { border-radius: 12px !important; box-shadow: 0 2px 8px rgba(0,0,0,0.07) !important; }
+
+// ── Sidebar nav text colour ─────────────────────────────────────────────────
+// Angular Material MDC list items encapsulate their text colour; we override
+// it here (global scope) so it respects the dark sidebar regardless of theme.
+.sidebar .mdc-list-item__primary-text {
+  color: rgba(255, 255, 255, 0.78) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+.sidebar .mat-icon { color: rgba(255, 255, 255, 0.78) !important; }
+
+.sidebar a.active-link {
+  .mdc-list-item__primary-text {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+  }
+  .mat-icon { color: #ffffff !important; }
+}
+
+.sidebar a:hover:not(.active-link) {
+  .mdc-list-item__primary-text { color: #ffffff !important; }
+  .mat-icon { color: #ffffff !important; }
+}
+
+mat-spinner { display: inline-block !important; vertical-align: middle !important; margin-right: 6px !important; }
+
+// Angular Material form fields — sharpen label font
+.mat-mdc-form-field .mat-mdc-floating-label {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+// Button typography
+.mdc-button { font-weight: 600 !important; letter-spacing: 0.02em !important; }
+

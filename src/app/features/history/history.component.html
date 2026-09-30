@@ -1,0 +1,135 @@
+<mat-tab-group animationDuration="200ms"
+  [selectedIndex]="historyState.activeTabIndex()"
+  (selectedTabChange)="onTabChange($event.index)">
+
+  <!-- TAB 1: By Account ID -->
+  <mat-tab label="By Account ID">
+    <div class="tab-body">
+      <div class="content-card">
+        <div class="search-row">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Account ID</mat-label>
+            <input matInput [formControl]="accountCtrl" placeholder="e.g. AC-10048"
+              (keyup.enter)="searchByAccount()" />
+            @if (accountCtrl.invalid && accountCtrl.touched) {
+              <mat-error>Account ID is required.</mat-error>
+            }
+          </mat-form-field>
+          <button mat-flat-button color="primary" (click)="searchByAccount()" [disabled]="accountSearching()">
+            @if (accountSearching()) { <mat-spinner diameter="16" class="btn-spin" /> }
+            <mat-icon>search</mat-icon> Search
+          </button>
+        </div>
+
+        @if (accountError()) {
+          <div class="not-found-msg">
+            <mat-icon>search_off</mat-icon> {{ accountError() }}
+          </div>
+        }
+      </div>
+
+      @if (accountResult()) {
+        <div class="content-card">
+          <h2 class="results-title">Migration History</h2>
+          <table class="data-table">
+            <colgroup>
+              <col style="width:200px">
+              <col style="width:160px">
+              <col>
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Account ID</th>
+                <th>Status</th>
+                <th>Log Report</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (m of accountResult()!.migrations; track $index) {
+                <tr>
+                  <td>{{ accountResult()!.accountId }}</td>
+                  <td><app-status-badge [status]="m.status" /></td>
+                  <td class="td-action">
+                    @if (m.logReportAvailable && m.migrationJobId) {
+                      <button mat-button color="primary" class="log-btn"
+                        (click)="viewAccountLog(m.migrationJobId!, accountResult()!.accountId)">
+                        <mat-icon>description</mat-icon> View Log Report
+                      </button>
+                    } @else {
+                      <span class="no-report">—</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </mat-tab>
+
+  <!-- TAB 2: By Batch ID -->
+  <mat-tab label="By Batch ID">
+    <div class="tab-body">
+      <div class="content-card">
+        <div class="search-row">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Batch ID</mat-label>
+            <input matInput [formControl]="batchCtrl" placeholder="e.g. 1"
+              (keyup.enter)="searchByBatch()" />
+            @if (batchCtrl.invalid && batchCtrl.touched) {
+              <mat-error>Batch ID is required.</mat-error>
+            }
+          </mat-form-field>
+          <button mat-flat-button color="primary" (click)="searchByBatch()" [disabled]="batchSearching()">
+            @if (batchSearching()) { <mat-spinner diameter="16" class="btn-spin" /> }
+            <mat-icon>search</mat-icon> Search
+          </button>
+        </div>
+
+        @if (batchError()) {
+          <div class="not-found-msg">
+            <mat-icon>search_off</mat-icon> {{ batchError() }}
+          </div>
+        }
+      </div>
+
+      @if (batchResult()) {
+        <div class="content-card">
+          <h2 class="results-title">Batch History</h2>
+          <table class="data-table">
+            <colgroup>
+              <col style="width:200px">
+              <col style="width:160px">
+              <col>
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Batch ID</th>
+                <th>Status</th>
+                <th>Log Report</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{{ batchResult()!.batchId }}</td>
+                <td><app-status-badge [status]="batchResult()!.status" /></td>
+                <td class="td-action">
+                  @if (batchResult()!.logReportAvailable && batchResult()!.migrationJobId) {
+                    <button mat-button color="primary" class="log-btn"
+                      (click)="viewBatchLog(batchResult()!.migrationJobId!)">
+                      <mat-icon>description</mat-icon> View Log Report
+                    </button>
+                  } @else {
+                    <span class="no-report">—</span>
+                  }
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </mat-tab>
+
+</mat-tab-group>

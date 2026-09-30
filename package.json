@@ -4,27 +4,36 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "start:mock": "ng serve --configuration mock",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "lint": "eslint src --ext .ts,.html"
   },
   "private": true,
   "packageManager": "npm@11.19.0",
   "dependencies": {
+    "@angular/animations": "^22.2.0",
+    "@angular/cdk": "^22.2.0",
     "@angular/common": "^22.2.0",
     "@angular/compiler": "^22.2.0",
     "@angular/core": "^22.2.0",
     "@angular/forms": "^22.2.0",
+    "@angular/material": "^22.2.0",
     "@angular/platform-browser": "^22.2.0",
     "@angular/router": "^22.2.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
+    "@angular-eslint/eslint-plugin": "^22.5.0",
+    "@angular-eslint/eslint-plugin-template": "^22.5.0",
     "@angular/build": "^22.2.0",
     "@angular/cli": "^22.2.0",
     "@angular/compiler-cli": "^22.2.0",
-    "prettier": "^3.8.1",
+    "@typescript-eslint/eslint-plugin": "^8.70.1",
+    "@typescript-eslint/parser": "^8.70.1",
+    "eslint": "^10.11.0",
+    "prettier": "^3.9.9",
     "typescript": "~6.0.2"
   }
 }

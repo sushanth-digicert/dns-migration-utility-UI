@@ -1,0 +1,28 @@
+<div class="shell">
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon"><mat-icon>dns</mat-icon></div>
+      <div>
+        <span class="brand-line1">Migration Utility</span>
+        <span class="brand-line2">Accounts &amp; Users</span>
+      </div>
+    </div>
+    <mat-nav-list class="nav-list">
+      <a mat-list-item routerLink="/dashboard" routerLinkActive="active-link" [routerLinkActiveOptions]="{exact:true}">
+        <mat-icon matListItemIcon>dashboard</mat-icon>
+        <span matListItemTitle>Dashboard</span>
+      </a>
+      <a mat-list-item routerLink="/migrate" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>play_circle</mat-icon>
+        <span matListItemTitle>Migrate Accounts</span>
+      </a>
+      <a mat-list-item routerLink="/history" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>manage_search</mat-icon>
+        <span matListItemTitle>Search History</span>
+      </a>
+    </mat-nav-list>
+  </nav>
+  <main class="main-content">
+    <router-outlet />
+  </main>
+</div>

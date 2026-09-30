@@ -1,0 +1,34 @@
+<div class="page-header">
+  <h1 class="page-title">Account & User Migration Utility</h1>
+  <p class="page-sub">Migrate accounts and their users from DNSME to DigiCert Unified DNS platform.</p>
+</div>
+
+<div class="action-grid">
+  <mat-card class="action-card" (click)="goValidate()">
+    <mat-card-content>
+      <div class="card-icon blue"><mat-icon>fact_check</mat-icon></div>
+      <h2>Validate Accounts</h2>
+      <p>Check if accounts are eligible for migration.</p>
+      <button mat-flat-button color="primary" (click)="$event.stopPropagation(); goValidate()">Validate Accounts</button>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="action-card" (click)="goMigrate()">
+    <mat-card-content>
+      <div class="card-icon green"><mat-icon>play_circle</mat-icon></div>
+      <h2>Migrate Accounts</h2>
+      <p>Migrate validated accounts to target system.</p>
+      <button mat-flat-button color="primary" (click)="$event.stopPropagation(); goMigrate()">Start Migration</button>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="action-card" (click)="goHistory()">
+    <mat-card-content>
+      <div class="card-icon purple"><mat-icon>manage_search</mat-icon></div>
+      <h2>Search History</h2>
+      <p>Search migration status by Account ID or Batch ID and view log reports.</p>
+      <button mat-flat-button color="primary" (click)="$event.stopPropagation(); goHistory()">Search History</button>
+    </mat-card-content>
+  </mat-card>
+</div>
+

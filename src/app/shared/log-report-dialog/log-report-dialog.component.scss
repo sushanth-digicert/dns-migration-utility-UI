@@ -1,0 +1,43 @@
+mat-dialog-content {
+  min-width: 480px;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+}
+
+.error {
+  color: #842029;
+}
+
+.meta {
+  margin-bottom: 16px;
+
+  p {
+    margin: 4px 0;
+    font-size: 14px;
+  }
+}
+
+.log-entries {
+  font-family: monospace;
+  font-size: 13px;
+}
+
+.log-entry {
+  display: flex;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.level {
+  font-weight: 700;
+  min-width: 52px;
+}
+
+.level-info .level  { color: #0056b3; }
+.level-error .level { color: #842029; }
+.level-warn .level  { color: #856404; }

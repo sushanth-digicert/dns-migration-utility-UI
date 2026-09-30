@@ -1,59 +1,80 @@
-# DnsMigrationUtilityUi
+# DNS Migration Utility UI
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.0.
+A production-quality Angular frontend for the **DNS Account & User Migration Utility** — enabling Support Engineers to validate, migrate, monitor, and search the history of DNS account migrations.
 
-## Development server
+## Tech Stack
 
-To start a local development server, run:
+- **Angular 22** — standalone components, signals, built-in control flow (`@if`, `@for`)
+- **Angular Material 22** — tabs, cards, steppers, dialogs, checkboxes, form fields
+- **RxJS** — HTTP, polling with `interval` + `takeWhile`
+- **TypeScript 6** — strict types, no `any`
+- **SCSS** — component-scoped styles
+- **Mock HTTP Interceptor** — stateful in-memory backend, controlled by `environment.useMockApi`
 
-```bash
-ng serve
+## Features
+
+| Screen | Route | Description |
+|---|---|---|
+| Dashboard | `/dashboard` | Action cards + recent migrations table |
+| Validate Accounts | `/migrate` | Enter Batch ID + Account IDs, run validation |
+| Validation Results | `/migrate` (inline) | Per-account pass/fail with reason; select eligible accounts |
+| Review & Start | `/migrate` (step 2) | Confirm selected accounts, start async migration |
+| Migration In Progress | `/migrate` (step 3) | Live status polling every 3 seconds |
+| Migration Completed | `/migrate` (step 4) | Final status + per-account log reports |
+| Search by Account ID | `/history` (tab 1) | Account migration history + log report |
+| Search by Batch ID | `/history` (tab 2) | Batch migration status + batch log report |
+
+## Project Structure
+
+```
+src/app/
+├── core/
+│   ├── interceptors/mock-api.interceptor.ts   # Stateful mock backend
+│   ├── models/migration.models.ts             # All API types
+│   └── services/
+│       ├── migration.service.ts               # 9 typed API methods
+│       └── migration-session.service.ts       # Signal-based shared state
+├── shared/
+│   ├── status-badge/                          # Colour-coded status pill
+│   └── log-report-dialog/                     # Modal log viewer
+├── layout/shell/shell.component.ts            # Blue sidebar + router outlet
+└── features/
+    ├── dashboard/dashboard.component.ts
+    ├── migrate/migrate.component.ts           # Full 4-step migration flow
+    └── history/history.component.ts           # Account + Batch search tabs
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## API Endpoints Integrated
 
-## Code scaffolding
+| Method | Endpoint |
+|---|---|
+| POST | `/api/v1/migrations/validate` |
+| POST | `/api/v1/migrations` |
+| GET | `/api/v1/migrations/{migrationJobId}` |
+| GET | `/api/v1/migrations/{migrationJobId}/accounts` |
+| GET | `/api/v1/migrations/{migrationJobId}/accounts/{accountId}` |
+| GET | `/api/v1/migrations/history/accounts/{accountId}` |
+| GET | `/api/v1/migrations/history/batches/{batchId}` |
+| GET | `/api/v1/migrations/{migrationJobId}/logs` |
+| GET | `/api/v1/migrations/{migrationJobId}/accounts/{accountId}/logs` |
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
+## Quick Start
 
 ```bash
-ng build
+npm install
+
+# With real backend
+npm start
+
+# With mock backend (no backend needed)
+npm run start:mock
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Open http://localhost:4200
 
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## Build
 
 ```bash
-ng test
+npm run build           # production
+npm run build -- --configuration mock   # mock build
 ```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.

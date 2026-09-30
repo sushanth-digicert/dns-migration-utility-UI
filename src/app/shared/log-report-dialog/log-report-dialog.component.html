@@ -1,0 +1,24 @@
+<h2 mat-dialog-title>{{ data.title ?? 'Migration Log Report' }}</h2>
+<mat-dialog-content>
+  @if (loading()) {
+    <div class="loading"><mat-spinner diameter="40" /></div>
+  } @else if (error()) {
+    <p class="error">{{ error() }}</p>
+  } @else {
+    <div class="meta">
+      @if (data.accountId) { <p><strong>Account ID:</strong> {{ data.accountId }}</p> }
+      <p><strong>Status:</strong> {{ status() }}</p>
+    </div>
+    <div class="log-entries">
+      @for (entry of entries(); track $index) {
+        <div class="log-entry" [ngClass]="'level-' + entry.level.toLowerCase()">
+          <span class="level">{{ entry.level }}</span>
+          <span class="message">{{ entry.message }}</span>
+        </div>
+      }
+    </div>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Close</button>
+</mat-dialog-actions>
