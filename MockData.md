@@ -26,12 +26,13 @@ Run `npm run start:mock` to enable the mock backend. All API calls are intercept
 
 ## Batch IDs at a Glance
 
-| Batch ID | Status | Notes |
-|----------|--------|-------|
-| `1`      | PARTIALLY_COMPLETED | 5 completed, 1 failed — best for partial-failure scenario |
-| *(any other)* | PARTIALLY_COMPLETED | Returns the same partial scenario |
-
-> Batch search always returns a `PARTIALLY_COMPLETED` status in the mock regardless of the batch ID entered, because the mock does not track real batch membership.
+| Batch ID | Status | Accounts | Log Report Scenario |
+|----------|--------|----------|---------------------|
+| `1` | PARTIALLY_COMPLETED | 5 completed, 1 failed | AC-10048 fails; rest succeed |
+| `2` *(or any unrecognised ID)* | COMPLETED | 6 completed, 0 failed | All accounts succeed |
+| `3` | FAILED | 0 completed, 6 failed | All accounts fail — target outage |
+| Any ID containing `fail`, `failed`, or `error` | FAILED | 0 completed, 6 failed | Same as batch `3` |
+| Any ID containing `partial` | PARTIALLY_COMPLETED | 5 completed, 1 failed | Same as batch `1` |
 
 ---
 
@@ -238,24 +239,83 @@ Status banner: **Migration Completed** (green).
 
 Navigate to **Search History → By Batch ID** tab.
 
-| Batch ID | Expected Status | Log Report |
-|----------|-----------------|------------|
-| `1`      | PARTIALLY_COMPLETED | Yes |
-| `42`     | PARTIALLY_COMPLETED | Yes |
-| `abc`    | PARTIALLY_COMPLETED | Yes |
+### 7a — Completed (All Pass)
 
-**Batch Log Report (any batch ID):**
+**Batch ID to enter:** `2` *(or any unrecognised ID)*
+
+| Field | Value |
+|-------|-------|
+| Status | **Completed** |
+| Total | 6 accounts |
+| Completed | 6 |
+| Failed | 0 |
+
+**Batch Log Report:**
 ```
-[INFO]  Migration batch request initiated.
-[INFO]  Processing 5 account(s).
-[INFO]  AC-10045: Migration completed successfully.
-[INFO]  AC-10046: Migration completed successfully.
-[ERROR] AC-10048: Account migration failed during target validation.
-[INFO]  AC-10049: Migration completed successfully.
-[INFO]  AC-10050: Migration completed successfully.
-[INFO]  Batch processing complete. 4 succeeded, 1 failed.
+[INFO]    Batch Start       Batch started. 6 accounts queued for migration.
+[SUCCESS] Account Processed AC-10045 migrated successfully in 38.2s.
+[SUCCESS] Account Processed AC-10046 migrated successfully in 37.2s.
+[SUCCESS] Account Processed AC-10049 migrated successfully in 42.2s.
+[SUCCESS] Account Processed AC-10050 migrated successfully in 42.2s.
+[SUCCESS] Account Processed AC-10051 migrated successfully in 39.7s.
+[SUCCESS] Account Processed AC-10052 migrated successfully in 38.5s.
+[INFO]    Batch Complete    All 6 accounts migrated successfully.
 ```
-Status banner: **Partially Completed** (yellow/amber).
+Status banner: **Migration Completed Successfully** (green).
+
+---
+
+### 7b — Partially Completed (1 Failure)
+
+**Batch ID to enter:** `1` *(or any ID containing "partial")*
+
+| Field | Value |
+|-------|-------|
+| Status | **Partially Completed** |
+| Total | 6 accounts |
+| Completed | 5 |
+| Failed | 1 (AC-10048) |
+
+**Batch Log Report:**
+```
+[INFO]    Batch Start       Batch started. 6 accounts queued for migration.
+[SUCCESS] Account Processed AC-10045 migrated successfully in 45.3s.
+[SUCCESS] Account Processed AC-10046 migrated successfully in 38.7s.
+[ERROR]   Account Processed AC-10048 failed and was rolled back after 2m 5s.
+[SUCCESS] Account Processed AC-10049 migrated successfully in 52.1s.
+[SUCCESS] Account Processed AC-10050 migrated successfully in 41.8s.
+[WARN]    Batch Complete    5 accounts migrated successfully, 1 requires attention.
+```
+Status banner: **Partially Completed** (amber).
+
+---
+
+### 7c — Failed (All Accounts Failed)
+
+**Batch ID to enter:** `3`, `fail`, `failed`, or any ID containing "error"
+
+| Field | Value |
+|-------|-------|
+| Status | **Failed** |
+| Total | 6 accounts |
+| Completed | 0 |
+| Failed | 6 |
+
+Simulates a target-system outage that caused every account to be rejected and rolled back.
+
+**Batch Log Report:**
+```
+[INFO]     Batch Start       Batch started. 6 accounts queued for migration.
+[ERROR]    Account Processed AC-10045 failed after 31.0s — target system rejected payload. Rolled back.
+[ERROR]    Account Processed AC-10046 failed after 27.4s — target system rejected payload. Rolled back.
+[WARN]     Account Processed Failure pattern detected. Remaining accounts likely to fail.
+[ERROR]    Account Processed AC-10048 failed after 27.7s — target system rejected payload. Rolled back.
+[ERROR]    Account Processed AC-10049 failed after 29.3s — target system rejected payload. Rolled back.
+[ERROR]    Account Processed AC-10050 failed after 28.5s — target system rejected payload. Rolled back.
+[ERROR]    Account Processed AC-10051 failed after 27.4s — target system rejected payload. Rolled back.
+[CRITICAL] Batch Complete    All 6 accounts failed — target system may be unavailable.
+```
+Status banner: **Migration Failed** (red).
 
 ---
 
@@ -349,7 +409,9 @@ This endpoint should return the N most recently processed accounts with their fi
 - [ ] All-fail validation: enter only IDs ending in 7 → Proceed button disabled
 - [ ] History by Account ID: `AC-10048` → Failed status + red log
 - [ ] History by Account ID: `AC-10045` → Completed status + green log
-- [ ] History by Batch ID: `1` → Partially Completed + batch log with ERROR line
+- [ ] History by Batch ID: `2` → Completed + all-success batch log (green banner)
+- [ ] History by Batch ID: `1` → Partially Completed + batch log with ERROR line (amber banner)
+- [ ] History by Batch ID: `3` → Failed + all-failed batch log with CRITICAL entry (red banner)
 - [ ] Download log report from Completed screen
 - [ ] Download log report from Search History
 - [ ] Dashboard Recent Migrations visible in mock mode
