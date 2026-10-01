@@ -35,9 +35,17 @@ mat-dialog-content {
 
 .level {
   font-weight: 700;
-  min-width: 52px;
+  min-width: 60px;
 }
 
-.level-info .level  { color: #0056b3; }
-.level-error .level { color: #842029; }
-.level-warn .level  { color: #856404; }
+.stage {
+  font-weight: 600;
+  min-width: 160px;
+  color: #374151;
+}
+
+.level-info    .level { color: #0056b3; }
+.level-success .level { color: #14532d; }
+.level-error   .level { color: #842029; }
+.level-warn    .level { color: #856404; }
+.level-critical .level { color: #7f1d1d; }

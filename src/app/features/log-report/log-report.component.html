@@ -1,14 +1,22 @@
 <div class="report-page">
+
   <!-- Header -->
   <div class="report-header">
     <div class="header-left">
       <button mat-button class="back-btn" (click)="goBack()">
         <mat-icon>arrow_back</mat-icon> Back
       </button>
-      <h1 class="report-title">Migration Log Report{{ titleSuffix() }}</h1>
+      <div>
+        <h1 class="report-title">Migration Log Report</h1>
+        @if (accountId()) {
+          <span class="report-sub">Account: {{ accountId() }}</span>
+        } @else if (batchId()) {
+          <span class="report-sub">Batch: {{ batchId() }}</span>
+        }
+      </div>
     </div>
     <button mat-flat-button color="primary" class="download-btn" (click)="downloadReport()" [disabled]="loading()">
-      <mat-icon>download</mat-icon> Download Log Report
+      <mat-icon>download</mat-icon> Download Log
     </button>
   </div>
 
@@ -23,13 +31,14 @@
       <span>{{ errorMsg() }}</span>
     </div>
   } @else {
+
     <!-- Status banner -->
     @if (isFailed()) {
       <div class="status-banner failed">
         <div class="banner-icon"><mat-icon>cancel</mat-icon></div>
         <div>
           <strong>Migration Failed</strong>
-          <p>Account migration failed. Please check the details below.</p>
+          <p>This account could not be migrated. Review the log entries below for details.</p>
         </div>
       </div>
     } @else if (isPartial()) {
@@ -37,45 +46,152 @@
         <div class="banner-icon"><mat-icon>warning</mat-icon></div>
         <div>
           <strong>Partially Completed</strong>
-          <p>Migration finished with some failures. Review entries below.</p>
+          <p>Migration finished with some failures. Review the entries below.</p>
         </div>
       </div>
     } @else {
       <div class="status-banner success">
         <div class="banner-icon"><mat-icon>check_circle</mat-icon></div>
         <div>
-          <strong>Migration Completed</strong>
-          <p>All operations completed successfully.</p>
+          <strong>Migration Completed Successfully</strong>
+          <p>All operations completed. The account is ready for zone and record migration.</p>
         </div>
       </div>
     }
 
-    <!-- Log table -->
-    <div class="log-card">
-      <table class="log-table">
-        <colgroup>
-          <col style="width: 110px">
-          <col>
-        </colgroup>
-        <thead>
-          <tr>
-            <th>Level</th>
-            <th>Message</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (entry of entries(); track $index) {
-            <tr [class.row-error]="entry.level === 'ERROR'" [class.row-warn]="entry.level === 'WARN'">
-              <td>
-                <span class="level-badge" [ngClass]="'level-' + entry.level.toLowerCase()">
-                  {{ entry.level }}
-                </span>
-              </td>
-              <td class="col-message">{{ entry.message }}</td>
-            </tr>
+    <!-- Summary stats strip -->
+    <div class="summary-strip">
+
+      <!-- Row 1: Status · Duration · Started · Completed -->
+      <div class="strip-row">
+        <div class="stat-tile">
+          <div class="stat-icon" [ngClass]="statusIconClass()">
+            <mat-icon>{{ statusIcon() }}</mat-icon>
+          </div>
+          <div class="stat-body">
+            <span class="stat-label">Status</span>
+            <span class="stat-value">{{ status() }}</span>
+          </div>
+        </div>
+
+        @if (durationMs() !== null) {
+          <div class="stat-tile">
+            <div class="stat-icon icon-purple">
+              <mat-icon>timer</mat-icon>
+            </div>
+            <div class="stat-body">
+              <span class="stat-label">Duration</span>
+              <span class="stat-value">{{ formatDuration(durationMs()) }}</span>
+            </div>
+          </div>
+        }
+
+        @if (startedAt()) {
+          <div class="stat-tile">
+            <div class="stat-icon icon-blue">
+              <mat-icon>play_circle</mat-icon>
+            </div>
+            <div class="stat-body">
+              <span class="stat-label">Started</span>
+              <span class="stat-value">{{ formatDateOnly(startedAt()) }}</span>
+              <span class="stat-sub">{{ formatTimeOnly(startedAt()) }}</span>
+            </div>
+          </div>
+        }
+
+        @if (completedAt()) {
+          <div class="stat-tile">
+            <div class="stat-icon icon-slate">
+              <mat-icon>flag</mat-icon>
+            </div>
+            <div class="stat-body">
+              <span class="stat-label">Completed</span>
+              <span class="stat-value">{{ formatDateOnly(completedAt()) }}</span>
+              <span class="stat-sub">{{ formatTimeOnly(completedAt()) }}</span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Row 2: Total Accounts · Succeeded · Failed (batch reports only) -->
+      @if (totalAccountCount() !== null) {
+        <div class="strip-row strip-row--counts">
+          <div class="stat-tile">
+            <div class="stat-icon icon-blue">
+              <mat-icon>dns</mat-icon>
+            </div>
+            <div class="stat-body">
+              <span class="stat-label">Total Accounts</span>
+              <span class="stat-value">{{ totalAccountCount() }}</span>
+            </div>
+          </div>
+
+          @if (completedAccountCount() !== null) {
+            <div class="stat-tile">
+              <div class="stat-icon icon-ok">
+                <mat-icon>check_circle</mat-icon>
+              </div>
+              <div class="stat-body">
+                <span class="stat-label">Succeeded Accounts</span>
+                <span class="stat-value">{{ completedAccountCount() }}</span>
+              </div>
+            </div>
           }
-        </tbody>
-      </table>
+
+          @if (failedAccountCount() !== null) {
+            <div class="stat-tile">
+              <div class="stat-icon" [ngClass]="failedAccountCount()! > 0 ? 'icon-fail' : 'icon-ok'">
+                <mat-icon>{{ failedAccountCount()! > 0 ? 'error' : 'check_circle' }}</mat-icon>
+              </div>
+              <div class="stat-body">
+                <span class="stat-label">Failed Accounts</span>
+                <span class="stat-value" [ngClass]="{ 'value-fail': failedAccountCount()! > 0 }">{{ failedAccountCount() }}</span>
+              </div>
+            </div>
+          }
+
+          <!-- Spacer tiles to prevent the 3 count tiles from stretching full width -->
+          <div class="stat-tile stat-tile--spacer"></div>
+        </div>
+      }
+
+    </div>
+
+    <!-- Log entries table -->
+    <div class="log-card">
+      <div class="log-card-header">
+        <span class="log-card-title">Log Entries</span>
+      </div>
+      <div class="log-table-wrap">
+        <table class="log-table">
+          <thead>
+          <tr>
+            <th class="col-time">Time</th>
+            <th class="col-level">Level</th>
+            <th class="col-stage">Stage</th>
+            <th class="col-status">Status</th>
+            <th class="col-message">Message</th>
+          </tr>
+          </thead>
+          <tbody>
+            @for (entry of entries(); track $index) {
+              <tr [ngClass]="rowClass(entry)">
+                <td class="col-time">{{ formatTime(entry.timestamp) }}</td>
+                <td class="col-level">
+                  <span class="level-badge level-{{ entry.level.toLowerCase() }}">{{ entry.level }}</span>
+                </td>
+                <td class="col-stage">{{ entry.stage }}</td>
+                <td class="col-status">
+                  @if (entry.status) {
+                    <span class="entry-status">{{ entry.status }}</span>
+                  }
+                </td>
+                <td class="col-message">{{ entry.support_message }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
   }
 </div>

@@ -1,4 +1,5 @@
 export interface ValidateRequest {
+  supportUserName: string;
   batchId?: string;
   accountIds: string[];
 }
@@ -18,6 +19,7 @@ export interface ValidateResponse {
 }
 
 export interface StartMigrationRequest {
+  supportUserName: string;
   batchId?: string;
   accountIds: string[];
 }
@@ -29,7 +31,8 @@ export interface StartMigrationResponse {
   status: MigrationJobStatus;
 }
 
-export type MigrationJobStatus = 'QUEUED' | 'IN_PROGRESS' | 'COMPLETED' | 'PARTIALLY_COMPLETED' | 'FAILED';
+export type MigrationJobStatus =
+  'QUEUED' | 'IN_PROGRESS' | 'COMPLETED' | 'PARTIALLY_COMPLETED' | 'FAILED';
 
 export interface MigrationJobStatusResponse {
   migrationJobId: string;
@@ -42,11 +45,15 @@ export interface MigrationJobStatusResponse {
   pendingAccountCount: number;
 }
 
-export type AccountMigrationStatus = 'PENDING' | 'QUEUED' | 'MIGRATING' | 'RETRYING' | 'COMPLETED' | 'FAILED';
+export type AccountMigrationStatus =
+  'PENDING' | 'QUEUED' | 'MIGRATING' | 'RETRYING' | 'COMPLETED' | 'FAILED';
 
 export interface AccountStatus {
   accountId: string;
+  batchId?: string;
   status: AccountMigrationStatus;
+  startedAt?: string;
+  completedAt?: string;
   errorCode?: string;
   errorMessage?: string;
 }
@@ -68,6 +75,9 @@ export interface SingleAccountStatusResponse {
 
 export interface AccountHistoryEntry {
   status: string;
+  batchId?: string;
+  startedAt?: string;
+  completedAt?: string;
   logReportAvailable: boolean;
   migrationJobId?: string;
 }
@@ -80,6 +90,8 @@ export interface AccountHistoryResponse {
 export interface BatchHistoryResponse {
   batchId: string;
   status: string;
+  startedAt?: string;
+  completedAt?: string;
   totalAccountCount: number;
   completedAccountCount: number;
   failedAccountCount: number;
@@ -87,9 +99,15 @@ export interface BatchHistoryResponse {
   migrationJobId?: string;
 }
 
+export type LogLevel = 'INFO' | 'SUCCESS' | 'WARN' | 'ERROR' | 'CRITICAL';
+
 export interface LogEntry {
-  level: 'INFO' | 'WARN' | 'ERROR';
-  message: string;
+  timestamp: string;
+  level: LogLevel;
+  stage: string;
+  outcome: 'success' | 'failure' | 'recovered' | 'recorded';
+  status?: string;
+  support_message: string;
 }
 
 export interface MigrationLogsResponse {
@@ -98,6 +116,12 @@ export interface MigrationLogsResponse {
   status: string;
   logReportAvailable: boolean;
   entries: LogEntry[];
+  batch_started_at?: string;
+  batch_completed_at?: string;
+  batch_duration_ms?: number;
+  total_account_count?: number;
+  completed_account_count?: number;
+  failed_account_count?: number;
 }
 
 export interface AccountLogsResponse {
@@ -105,9 +129,13 @@ export interface AccountLogsResponse {
   accountId: string;
   status: string;
   entries: LogEntry[];
+  account_started_at?: string;
+  account_completed_at?: string;
+  account_duration_ms?: number;
 }
 
 export interface MigrationSession {
+  supportUserName?: string;
   batchId?: string;
   validationResults?: ValidateResponse;
   selectedAccountIds: string[];
@@ -116,9 +144,14 @@ export interface MigrationSession {
 
 export interface RecentMigrationEntry {
   accountId: string;
+  batchId?: string;
   status: string;
+  startedAt?: string;
+  completedAt?: string;
+  logReportAvailable?: boolean;
+  migrationJobId?: string;
 }
 
 export interface RecentMigrationsResponse {
-  accounts: RecentMigrationEntry[];
+  migrations: RecentMigrationEntry[];
 }
